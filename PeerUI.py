@@ -11,11 +11,12 @@ friendList = None
 friends = []
 
 def updateFriendList():
-    global peer
+    pass
+    '''global peer
     global friendList
     global friends
     if (peer != None):
-        friendList = peer.listFriend.split(';')
+        friendList = peer.listPeers.split(';')
     print(friendList)
     if (len(friends) != 0):
         friends = []
@@ -24,9 +25,9 @@ def updateFriendList():
             friend = friendList[i].split(":")
             friends.append(copy.deepcopy(friend))
         for i in range(0,len(friends)):
-            Button(master,text=friends[i][0],command = lambda b=friends[i][1]: RunClient(b)).place(x=500,y = (i + 1)*50 + 100)
+            Button(master, text=friends[i][0],command = lambda b=friends[i][1]: ConnectToPeer(b)).place(x=500,y = (i + 1)*50 + 100)'''
 
-def RunServer():
+def RunPeer():
     global flag
     global peer
     print("Starting Server")
@@ -38,14 +39,14 @@ def RunServer():
             portEntry.configure(state='readonly')
             peer = Peer(nameEntry.get(), int(portEntry.get()),text)
             print("Create Server")
-            peer.startServer()
+            peer.startPeer()
             print("Run Server")
             flag = False
         except Exception:
             print("Fail Server")
             return
         
-def RunClient(port):
+def ConnectToPeer(IP, port):
     global flag
     global peer
 
@@ -53,7 +54,7 @@ def RunClient(port):
     if (flag == True or peer == None):
         return
     try:
-        peer.startClient(port)
+        peer.connectToPeer(IP, port)
         print("Run client")
     except Exception:
         print("Fail client")
@@ -73,7 +74,7 @@ def SendFile():
         return
     try:
         if (fileBox.get() != ""):
-            peer.handleSendFile(fileBox.get())
+            peer.SendFile(fileBox.get())
     except:
         return
 
@@ -99,7 +100,7 @@ nameEntry = Entry(master,width=30)
 portEntry = Entry(master,width=10)
 nameEntry.place(x=60,y=10)
 portEntry.place(x=320,y=10)
-runServerButton = Button(master,text="Run",command=RunServer)
+runServerButton = Button(master,text="Run",command=RunPeer)
 runServerButton.place(x=400,y = 10)
 
 # Create an object of tkinter ImageTk

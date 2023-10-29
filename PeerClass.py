@@ -5,149 +5,108 @@ import json
 import os
 
 class Peer:
+    IP = socket.gethostbyname(socket.gethostname()) 
+    # port lay tu input
+    ServerIP = socket.gethostbyname(socket.gethostname()) # test 2 may thi dung IP cua sever
+    ServerPort = 5000
+    FORMAT = "utf-8"
+    SIZE = 1024
+    PeerSocket = None
     listSocket = []
-    IP = socket.gethostbyname(socket.gethostname())
     allThreads = []
     endAllThread = False
-    filename = ""
-    ports = []
-    listPeers = ""
-    ServerPort = 5000
-    ServerIP = socket.gethostbyname(socket.gethostname())
-    FORMAT = "utf-8"
     
-    def __init__(self,name,port,text):
+    def __init__(self, name, port, text):
         self.port = port
         self.name = name
         self.text = text
-
-    def recv_input_stream(self, connection, IP):
-        print("Connection from: " + str(IP))
-        while True:
-            if (self.endAllThread == True):
-                break
-            try:
-                data = connection.recv(1024).decode(self.FORMAT)
-                if (not(data)):
-                    return -1
-                jsonMessage = json.loads(data)
-                print(jsonMessage)
-               
-                if(jsonMessage["type"] == "file"):
-                    self.filename = jsonMessage["filename"]
-                    self.text.configure(state='normal')
-                    self.text.insert(tk.END,"<"+jsonMessage["name"]+ "> : send you " + self.filename +" check your folder\n")
-                    self.text.configure(state='disable')
-                elif(jsonMessage["type"] == "central"):
-                    self.listPeers = jsonMessage["listPeers"]
-            except:
-                continue
     
-    def registerPort(self):
-        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        serverSocket.bind((self.IP, self.port))
-        serverSocket.listen()
-        centralSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        centralSocket.connect((self.ServerIP, self.ServerPort))
-        data =  '{"name":"' + self.name + '", "IP":"' + self.IP +'", "port":' + str(self.port) + '}'
-        centralSocket.send(data.encode(self.FORMAT))
-        '''while (True):
-            if (self.endAllThread == True):
+    def startPeer(self):
+        register = Thread(target=self.runPeer)
+        self.allThreads.append(register)
+        register.start()
+
+    def runPeer(self):
+        # register address
+        registerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        registerSocket.connect((self.ServerIP, self.ServerPort))
+        self.listSocket.append(registerSocket)
+        data = json.dumps({"name": self.name, "IP": self.IP, "port": self.port, "action": "register"})
+        registerSocket.send(data.encode(self.FORMAT))
+        # listen message
+        self.PeerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.PeerSocket.bind((self.IP, self.port))
+        self.listSocket.append(self.PeerSocket)
+        self.PeerSocket.listen()
+        print('Peer is running...')
+        while (not(self.endAllThread)):
+            try:
+                conn, addr = self.PeerSocket.accept()
+            except:
                 break
-            conn, addr = serverSocket.accept()  # accept new connection
-            acceptThread = Thread(target=self.acceptConnection,args=(conn,addr))
-            self.allThreads.append(acceptThread)
-            acceptThread.start()'''
-        
-    def getListPeer(self):
+            if (conn):
+                try:
+                    receiveData = conn.recv(self.SIZE).decode(self.FORMAT)
+                    jsonData = json.loads(receiveData)
+                    fname = jsonData["fname"]
+                    if (jsonData["action"] == "reqFile"):
+                        sender = Thread(target=self.sendFile, args=(conn, fname))
+                        self.allThreads.append(sender)
+                        sender.start()
+                    elif (jsonData["action"] == "resFile"):
+                        self.receiveFile(conn, fname)
+                except:
+                    continue
+
+    def getListPeer(self, connection):
+        # code
         pass
 
-    def connectToPeer(self):
+    def getListFile(self, connection):
+        # code
         pass
     
-    def acceptConnection(self,connection, IP):
-        while True:
-            if (self.endAllThread == True):
-                break
-            input_stream = Thread(target=self.recv_input_stream, args=(connection,IP))
-            receiveFileStream = Thread(target=self.handleReceiveFile, args=(connection,))
-            receiveFileStream.start()
-            input_stream.start()
-            self.allThreads.append(input_stream)
-            self.allThreads.append(receiveFileStream)
-            receiveFileStream.join()
-            input_stream.join()
+    def requestFile(self, IP, port, fname):
+        connect = Thread(target=self.startConnection, args=(IP, port, fname))
+        self.allThreads.append(connect)
+        connect.start()
 
-    def publishFile(self):
+    def startConnection(self, IP, port, fname):
+        connectSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connectSocket.connect((IP, port))
+        mess = json.dumps({"name": self.name, "action": "reqFile", "fname": fname})
+        connectSocket.send(mess.encode(self.FORMAT))
+
+    def publishFile(self, lname, fname):
+        # code
         pass
 
-    def handleSendFile(self,filePath):
-        filename = filePath.split('/')[-1]
-        self.text.configure(state='normal')  
-        self.text.insert(tk.END,"<You> : send an " + filename +" to your friend\n")
-        self.text.configure(state='disable')
-        data =  '{ "name":"'+self.name+'", "type":"file", "filename":"'+filename+'"}'
-        for client in self.listSocket:
-            client.send(data.encode('utf-8'))
-        for client in self.listSocket:
-            try:
-                f = open(filePath,'rb')
-                print("Start sending file")
-                while (True):
-                    l = f.read(1024)
-                    if (not(l)):
-                        break
-                    client.send(l)
-                    print('Sending...')
-                f.close()
-                print("Done Sending")
-                client.shutdown(socket.SHUT_WR)
-            except:
-                pass
-        self.listSocket = []
-        for port in self.ports:
-            sender = Thread(target=self.setUpSendMessage,args=(self.IP,port))
-            self.allThreads.append(sender)
-            sender.start()
+    def sendFile(self, connection, fname):
+        mess = json.dumps({"name": self.name, "action": "resFile", "fname": fname})
+        connection.send(mess.encode(self.FORMAT))
+        # code
 
-    def handleReceiveFile(self,connection):
+        print("Send succeed")
+        connection.close()
+
+    def receiveFile(self, connection, fname):
         while True:
             try:
-                try: 
-                    os.mkdir(self.name) 
-                except: 
-                    pass
-                f = open(self.name+"/"+self.filename,'wb')
-                print('Start Receiving')
+                f = open(self.name + "/" + fname, 'wb')
                 while (True):
                     print("Receiving...")
-                    l = connection.recv(1024)
-                    if (not(l)):
+                    try:
+                        file = connection.recv(self.SIZE)
+                        f.write(file)
+                        f.close()
+                        print("Done Receiving") 
+                        connection.close()
                         break
-                    f.write(l)
-                f.close()
-                print("Done Receiving") 
-                self.filename = ""
+                    except:
+                        continue
             except:
                 continue
-
-    def setUpSendMessage(self,IP,port):
-        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientSocket.connect((IP, int(port)))
-        self.listSocket.append(clientSocket)
-        print("Connect to " + str(port))
-
-    def startServer(self):
-        binder = Thread(target=self.registerPort)
-        self.allThreads.append(binder)
-        binder.start()
-
-    def startClient(self,port):
-        sender = Thread(target=self.setUpSendMessage,args=(self.IP,port))
-        self.ports.append(port)
-        self.allThreads.append(sender)
-        sender.start()
-
+        
     def endSystem(self):
         print("End system call")
         for socket in self.listSocket:

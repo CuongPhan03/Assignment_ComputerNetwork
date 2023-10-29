@@ -5,8 +5,9 @@ import json
 class Server:
     IP = socket.gethostbyname(socket.gethostname())
     PORT = 5000
-    ADDR = (IP, PORT)
     FORMAT = "utf-8"
+    SIZE = 1024
+    listFile = {"datas":[]}
     serverSocket = None
     listSocket = []
     jsonPeerDatas = []
@@ -14,54 +15,50 @@ class Server:
     endAllThread = False
     
     def startServer(self):
-        binder = Thread(target=self.listenRegistration)
+        binder = Thread(target=self.listenMessage)
         self.allThreads.append(binder)
         binder.start()
 
-    def listenRegistration(self):
+    def listenMessage(self):
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serverSocket.bind((self.IP, self.PORT))
         self.listSocket.append(self.serverSocket)
-        self.serverSocket.bind(self.ADDR)
         self.serverSocket.listen()
-
         print('Server is running...')
         while (self.endAllThread == False):
-            #self.sendListPeer()
             try:
                 conn, addr = self.serverSocket.accept()
             except:
                 break
             if (conn):
-                print("Have an user connnected")
                 try:
-                    data = conn.recv(1024).decode(self.FORMAT)
-                    rawData = data.replace('}', ', "listFile": []}')
-                    print(rawData)
-                    self.jsonPeerDatas.append(rawData)
+                    receiveData = conn.recv(self.SIZE).decode(self.FORMAT)
+                    jsonData = json.loads(receiveData)
+                    if (jsonData["action"] == "register"):
+                        self.jsonPeerDatas.append(receiveData)
+                    elif (jsonData["action"] == "publish"):
+                        self.listFile["datas"].append(jsonData["fname"])
+                    elif (jsonData["action"] == "reqListFile"):
+                        self.sendListFile(conn)
+                    elif (jsonData["action"] == "reqListPeer"):
+                        self.sendListPeer(conn, jsonData["fname"])
                 except:
                     continue
 
-    def sendListPeer(self, IP, port, fname):
-        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listSocket.append(clientSocket)
-        clientSocket.connect((IP, port))
-        datas = '{"data":['
-        i = 0
+    def sendListPeer(self, connection, fname):
+        datas = {"datas":[]}
         for jsonPeerData in self.jsonPeerDatas:
             if (fname in jsonPeerData):
                 jsonData = json.loads(jsonPeerData)
-                rawData = '{"name":"' + jsonData["name"] + '", "IP":"' + jsonData["IP"] + '", "port":' + str(jsonData["port"]) + '}'
-                if i != 0: 
-                    datas += ', '
-                datas += rawData
-                i += 1
-        datas += ']}'
-        clientSocket.send(datas.encode(self.FORMAT))
-        print("Send success")
+                data = {"name": jsonData["name"], "IP": jsonData["IP"], "port": jsonData["port"]}
+                datas["datas"].append(data)
+        sendDatas = json.dumps(datas)
+        connection.send(sendDatas.encode(self.FORMAT))
 
-    def sendListFile(self):
+    def sendListFile(self, connection):
+        # code
         pass
-
+    
     def endSystem(self):
         print("End system call")
         for socket in self.listSocket:
