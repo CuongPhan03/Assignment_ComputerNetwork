@@ -15,7 +15,7 @@ class Server:
     endAllThread = False
     
     def startServer(self):
-        binder = Thread(target=self.listenMessage)
+        binder = Thread(target = self.listenMessage)
         self.allThreads.append(binder)
         binder.start()
 
@@ -35,7 +35,8 @@ class Server:
                     receiveData = conn.recv(self.SIZE).decode(self.FORMAT)
                     jsonData = json.loads(receiveData)
                     if (jsonData["action"] == "register"):
-                        self.jsonPeerDatas.append(receiveData)
+                        jsonData["connection"] = conn
+                        self.jsonPeerDatas.append(jsonData)
                     elif (jsonData["action"] == "publish"):
                         self.listFile["datas"].append(jsonData["fname"])
                     elif (jsonData["action"] == "reqListFile"):
@@ -54,6 +55,13 @@ class Server:
                 datas["datas"].append(data)
         sendDatas = json.dumps(datas)
         connection.send(sendDatas.encode(self.FORMAT))
+
+    def getListPeer(self):
+        for peer in self.listFile:
+            pass
+
+    def getPeerInfo(self, connection):
+        pass
 
     def sendListFile(self, connection):
         # code

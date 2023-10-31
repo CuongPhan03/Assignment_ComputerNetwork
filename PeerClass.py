@@ -12,14 +12,14 @@ class Peer:
     FORMAT = "utf-8"
     SIZE = 1024
     PeerSocket = None
+    ServerConnSocket = None
     listSocket = []
     allThreads = []
     endAllThread = False
     
-    def __init__(self, name, port, text):
-        self.port = port
+    def __init__(self, name, port):
         self.name = name
-        self.text = text
+        self.port = port
     
     def startPeer(self):
         register = Thread(target=self.runPeer)
@@ -28,11 +28,11 @@ class Peer:
 
     def runPeer(self):
         # register address
-        registerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        registerSocket.connect((self.ServerIP, self.ServerPort))
-        self.listSocket.append(registerSocket)
+        self.ServerConnSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.ServerConnSocket.connect((self.ServerIP, self.ServerPort))
+        self.listSocket.append(self.ServerConnSocket)
         data = json.dumps({"name": self.name, "IP": self.IP, "port": self.port, "action": "register"})
-        registerSocket.send(data.encode(self.FORMAT))
+        self.ServerConnSocket.send(data.encode(self.FORMAT))
         # listen message
         self.PeerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.PeerSocket.bind((self.IP, self.port))
@@ -58,13 +58,15 @@ class Peer:
                 except:
                     continue
 
-    def getListPeer(self, connection):
+    def getListPeer(self, fname):
         # code
-        pass
+        data 
+        return data
 
-    def getListFile(self, connection):
+    def getListFile(self):
         # code
-        pass
+        data
+        return data
     
     def requestFile(self, IP, port, fname):
         connect = Thread(target=self.startConnection, args=(IP, port, fname))
