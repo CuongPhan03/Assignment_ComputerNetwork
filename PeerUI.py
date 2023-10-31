@@ -83,6 +83,7 @@ def on_closing():
         peer.endSystem()
     master.destroy()
     
+
 master = tk.Tk()
 master.title('Peer')
 master.geometry("650x450")
@@ -107,7 +108,6 @@ style.configure('my.TButton', font=('Helvetica', 10))
 runPeerBtn = ttk.Button(master, text = "Run", style='my.TButton', width = 8, takefocus = 0, command = RunPeer)
 runPeerBtn.place(x = 560, y = 58)
 
-#
 l5 = tk.Label(master, text = "List File:", font = ("Helvetica", 11))
 l5.place(x = 20, y = 130)
 showListFile = ttk.Button(master, text = "Refresh", style = 'my.TButton', takefocus = 0, command = updateListFile)

@@ -52,6 +52,7 @@ def on_closing():
         server.endSystem()
     master.destroy()
     
+
 master = tk.Tk()
 master.title('Server')
 master.geometry("650x450")

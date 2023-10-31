@@ -84,6 +84,20 @@ class Peer:
         mess = json.dumps({"name": self.name, "action": "reqFile", "fname": fname})
         connectSocket.send(mess.encode(self.FORMAT))
 
+    def connectToPeer(IP, port):
+        global flag
+        global peer
+
+        print("Starting client")
+        if flag or peer is None:
+            return
+
+        try:
+            peer.connectToPeer(IP, port)
+            print("Client connected successfully")
+        except Exception as e:
+            print("Failed to connect to the peer:", str(e))
+
     def publishFile(self, lname, fname):
         # code
 
