@@ -74,7 +74,7 @@ def SendFile():
         return
     try:
         if (fileBox.get() != ""):
-            peer.SendFile(fileBox.get())
+            peer.sendFile(fileBox.get())
     except:
         return
 
