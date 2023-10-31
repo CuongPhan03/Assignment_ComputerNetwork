@@ -59,9 +59,10 @@ class Server:
 
     def sendListFile(self, connection):
         # code
-        file_list = json.dumps(self.listFile)
-        connection.send(file_list.encode(self.FORMAT))
-    pass
+        file_list = {"files": self.listFile["datas"]}
+        send_data = json.dumps(file_list)
+        connection.send(send_data.encode(self.FORMAT))
+        pass
 
     def endSystem(self):
         print("End system call")
