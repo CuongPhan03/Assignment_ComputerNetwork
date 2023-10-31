@@ -12,14 +12,14 @@ class Peer:
     FORMAT = "utf-8"
     SIZE = 1024
     PeerSocket = None
-    ServerConnSocket = None
     listSocket = []
     allThreads = []
     endAllThread = False
     
-    def __init__(self, name, port):
-        self.name = name
+    def __init__(self, name, port, text):
         self.port = port
+        self.name = name
+        self.text = text
     
     def startPeer(self):
         register = Thread(target=self.runPeer)
@@ -28,11 +28,11 @@ class Peer:
 
     def runPeer(self):
         # register address
-        self.ServerConnSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.ServerConnSocket.connect((self.ServerIP, self.ServerPort))
-        self.listSocket.append(self.ServerConnSocket)
+        registerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        registerSocket.connect((self.ServerIP, self.ServerPort))
+        self.listSocket.append(registerSocket)
         data = json.dumps({"name": self.name, "IP": self.IP, "port": self.port, "action": "register"})
-        self.ServerConnSocket.send(data.encode(self.FORMAT))
+        registerSocket.send(data.encode(self.FORMAT))
         # listen message
         self.PeerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.PeerSocket.bind((self.IP, self.port))
@@ -58,15 +58,20 @@ class Peer:
                 except:
                     continue
 
-    def getListPeer(self, fname):
+    def getListPeer(self, connection):
         # code
-        data 
-        return data
+        
+        peerList = []
+        for socket in self.listSocket:
+            if socket != connection:
+                peerList.append(socket.getpeername())
+        return peerList
 
-    def getListFile(self):
+    def getListFile(self, connection):
         # code
-        data
-        return data
+
+        fileList = os.listdir(self.name)
+        return fileList
     
     def requestFile(self, IP, port, fname):
         connect = Thread(target=self.startConnection, args=(IP, port, fname))
@@ -81,12 +86,32 @@ class Peer:
 
     def publishFile(self, lname, fname):
         # code
-        pass
+
+        path = os.path.join(self.name, lname)
+        if os.path.isfile(path):
+            return "File already exists"
+        else:
+            with open(path, "w") as file:
+                file.write(self.text)
+            return "File published successfully"
+        
 
     def sendFile(self, connection, fname):
-        mess = json.dumps({"name": self.name, "action": "resFile", "fname": fname})
-        connection.send(mess.encode(self.FORMAT))
         # code
+
+        path = os.path.join(self.name, fname)
+        if os.path.isfile(path):
+            mess = json.dumps({"name": self.name, "action": "resFile", "fname": fname})
+            connection.send(mess.encode(self.FORMAT))
+            with open(path, "rb") as file:
+                data = file.read(self.SIZE)
+                while data:
+                    connection.send(data)
+                    data = file.read(self.SIZE)
+            print("Send succeed")
+        else:
+            print("File not found")
+        connection.close()
 
         print("Send succeed")
         connection.close()
