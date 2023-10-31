@@ -60,11 +60,18 @@ class Peer:
 
     def getListPeer(self, connection):
         # code
-        pass
+        
+        peerList = []
+        for socket in self.listSocket:
+            if socket != connection:
+                peerList.append(socket.getpeername())
+        return peerList
 
     def getListFile(self, connection):
         # code
-        pass
+
+        fileList = os.listdir(self.name)
+        return fileList
     
     def requestFile(self, IP, port, fname):
         connect = Thread(target=self.startConnection, args=(IP, port, fname))
@@ -79,12 +86,32 @@ class Peer:
 
     def publishFile(self, lname, fname):
         # code
-        pass
+
+        path = os.path.join(self.name, lname)
+        if os.path.isfile(path):
+            return "File already exists"
+        else:
+            with open(path, "w") as file:
+                file.write(self.text)
+            return "File published successfully"
+        
 
     def sendFile(self, connection, fname):
-        mess = json.dumps({"name": self.name, "action": "resFile", "fname": fname})
-        connection.send(mess.encode(self.FORMAT))
         # code
+
+        path = os.path.join(self.name, fname)
+        if os.path.isfile(path):
+            mess = json.dumps({"name": self.name, "action": "resFile", "fname": fname})
+            connection.send(mess.encode(self.FORMAT))
+            with open(path, "rb") as file:
+                data = file.read(self.SIZE)
+                while data:
+                    connection.send(data)
+                    data = file.read(self.SIZE)
+            print("Send succeed")
+        else:
+            print("File not found")
+        connection.close()
 
         print("Send succeed")
         connection.close()

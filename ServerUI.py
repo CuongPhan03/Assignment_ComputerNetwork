@@ -26,7 +26,7 @@ def on_closing():
     master.destroy()
     
 master = Tk()
-master.title('The game')
+master.title('File Sharing Application')
 master.geometry("600x500")
 master.resizable(0, 0)
 

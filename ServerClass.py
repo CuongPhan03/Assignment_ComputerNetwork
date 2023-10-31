@@ -57,6 +57,9 @@ class Server:
 
     def sendListFile(self, connection):
         # code
+
+        sendDatas = json.dumps(self.listFile)
+        connection.send(sendDatas.encode(self.FORMAT))
         pass
     
     def endSystem(self):

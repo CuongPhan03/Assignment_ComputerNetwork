@@ -87,7 +87,7 @@ def on_closing():
     master.destroy()
     
 master = Tk()
-master.title('The game')
+master.title('File Sharing Application')
 master.geometry("600x500")
 master.resizable(0, 0)
 
@@ -104,7 +104,7 @@ runServerButton = Button(master,text="Run",command=RunPeer)
 runServerButton.place(x=400,y = 10)
 
 # Create an object of tkinter ImageTk
-appTitle = Label(master, text = "Chat App",width=30, font=("Helvetica", 25,"bold"),background ="#53f5f0", anchor="center")
+appTitle = Label(master, text = "File Sharing Application",width=30, font=("Helvetica", 25,"bold"),background ="#53f5f0", anchor="center")
 appTitle.place(x = 25, y = 45)
 
 chatArea = Frame(master,width = 100,height  = 300)
