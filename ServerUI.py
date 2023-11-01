@@ -35,9 +35,11 @@ def updateListUser():
 def showPeerInfo(e):
     global server
     global listPeer
-    index = listbox.curselection()[0]
+    try:
+        index = listbox.curselection()[0]
+    except:
+        return
     peer = listPeer[index]
-    #server.getPeerInfo(peer["connection"])
     info.configure(state = "normal")
     info.delete(1.0, "end")
     info.insert("end", " name:    " + peer["name"] + "\n")

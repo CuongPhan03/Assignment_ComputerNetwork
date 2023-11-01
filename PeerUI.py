@@ -28,7 +28,7 @@ def updateListFile():
     if (peer == None):
         return
     peer.reqListFile()
-    time.sleep(0.05)
+    time.sleep(0.03)
     listFile = peer.listFileServer
     listbox.delete(0, "end")
     for peerBtn in peerBtns:
@@ -56,7 +56,7 @@ def showListPeer(e):
             name = peerData["name"]
             IP = peerData["IP"]
             port = peerData["port"]
-            peerBtn = ttk.Button(master, text = name, style = 'my.TButton', takefocus = 0, command = lambda: peer.requestFile(IP, port, fname))
+            peerBtn = ttk.Button(master, text = name, style = 'my.TButton', takefocus = 0, command = lambda: peer.requestFile(IP, port, fname, name))
             peerBtn.place(x = 460, y = (i + 1)*40 + 120)
             peerBtns.append(peerBtn)
             if (peer.ID == peerData["ID"]):

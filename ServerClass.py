@@ -8,8 +8,8 @@ class Server:
     PORT = 5000
     FORMAT = "utf8"
     SIZE = 1024
-    listFile = []
-    jsonPeerDatas = []
+    listFile = []       # [fname1, fname2]
+    jsonPeerDatas = []  # [{"name": , "IP": , "port": , "action": , "listFile": [fname, ]}, ]
     peerId = 0
     serverSocket = None
     listSocket = []
@@ -26,7 +26,7 @@ class Server:
         self.serverSocket.bind((self.IP, self.PORT))
         self.listSocket.append(self.serverSocket)
         self.serverSocket.listen()
-        print('Server is running...')
+        print("Server is running...")
         while (self.endAllThread == False):
             try:
                 conn, addr = self.serverSocket.accept()
@@ -43,6 +43,7 @@ class Server:
                 receiveData = connection.recv(self.SIZE).decode(self.FORMAT)
                 jsonData = json.loads(receiveData)
                 if (jsonData["action"] == "register"):
+                    print(jsonData["name"] + " joined !")
                     self.jsonPeerDatas.append(jsonData)
                     ID = copy.deepcopy(self.peerId)
                     jsonData["ID"] = ID
@@ -52,6 +53,7 @@ class Server:
                 elif (jsonData["action"] == "publishFile"):
                     index = jsonData["ID"]
                     fname = jsonData["fname"]
+                    print(jsonData["name"] + " published " + fname)
                     self.jsonPeerDatas[index]["listFile"].append(fname)
                     fname_exist = False
                     for fileName in self.listFile:
@@ -85,7 +87,7 @@ class Server:
         connection.send(sendDatas.encode(self.FORMAT))
 
     def endSystem(self):
-        print("End system call")
+        print("Server off !")
         for socket in self.listSocket:
             socket.close()
             del socket
