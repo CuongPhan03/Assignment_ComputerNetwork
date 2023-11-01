@@ -3,8 +3,7 @@ import tkinter.ttk as ttk
 from ServerClass import Server
 
 server = None
-listPeer = [{"name": "fdgfdg", "IP":"123.22.4.14", "port":213, "connection": "conn", "listFile":["asf", "ae"]},
-            {"name": "augsu", "IP":"123.22.4.14", "port":213, "connection": "conn", "listFile":["dfgd", "ahte"]}]
+listPeer = None
 
 def RunServer():
     global server
@@ -18,12 +17,16 @@ def RunServer():
 
 def updateListUser():
     global server
+    global listPeer
     if (server == None):
         return
-    if (listPeer != None):
-        listbox.delete(0, "end")
-        info.delete(0, "end")
-        #listPeer = server.getListPeer()
+    listPeer = server.jsonPeerDatas
+    listbox.delete(0, "end")
+    info.configure(state = "normal")
+    info.delete(1.0, "end")
+    info.configure(state = "disable")
+    if (listPeer != None and len(listPeer) > 0):
+        listbox.configure(state = "normal")
         i = 0
         for peer in listPeer:
             listbox.insert(i, ' ' + peer["name"])
@@ -31,27 +34,26 @@ def updateListUser():
 
 def showPeerInfo(e):
     global server
+    global listPeer
     index = listbox.curselection()[0]
     peer = listPeer[index]
     #server.getPeerInfo(peer["connection"])
     info.configure(state = "normal")
     info.delete(1.0, "end")
     info.insert("end", " name:    " + peer["name"] + "\n")
-    info.insert("end", " port:       " + str(peer["port"]) + "\n")
+    info.insert("end", " port:      " + str(peer["port"]) + "\n")
     info.insert("end", " IP:         " + peer["IP"] + "\n")
     info.insert("end", " List file:\n")
-    for fname in peer["listFile"]:
-        info.insert("end", "      " + fname +"\n")
-
+    if (peer["listFile"] != None):
+        for fname in peer["listFile"]:
+            info.insert("end", "      " + fname +"\n")
     info.configure(state = "disable")
-
 
 def on_closing():
     global server
     if (server != None):
         server.endSystem()
     master.destroy()
-    
 
 master = tk.Tk()
 master.title('Server')
@@ -81,7 +83,9 @@ showListFile.place(x = 188, y = 125)
 userArea = tk.Frame(master, background="white")
 userArea.place(x = 20, y = 155)
 scroll1 = ttk.Scrollbar(userArea)
-listbox = tk.Listbox(userArea, yscrollcommand = scroll1.set, font = ("Helvetica", 14), width = 22, height = 8, selectbackground='#b8f89e', selectforeground='black', activestyle='none', highlightthickness=0, borderwidth=0, selectmode = "single")
+listbox = tk.Listbox(userArea, yscrollcommand = scroll1.set, font = ("Helvetica", 14), width = 22, height = 8,
+                    selectbackground='#b8f89e', selectforeground='black', activestyle='none', highlightthickness=0, borderwidth=0, 
+                    selectmode = "single", state = "disabled")
 listbox.bind("<<ListboxSelect>>", showPeerInfo)
 scroll1.pack(side = "right", fill = "y")
 listbox.pack(side = "left", padx = 5, pady = 5)

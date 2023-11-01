@@ -1,17 +1,18 @@
 from threading import Thread
 import socket
 import json
-
+import copy
 
 class Server:
     IP = socket.gethostbyname(socket.gethostname())
     PORT = 5000
-    FORMAT = "utf-8"
+    FORMAT = "utf8"
     SIZE = 1024
-    listFile = {"datas": []}
+    listFile = []
+    jsonPeerDatas = []
+    peerId = 0
     serverSocket = None
     listSocket = []
-    jsonPeerDatas = []
     allThreads = []
     endAllThread = False
 
@@ -32,34 +33,55 @@ class Server:
             except:
                 break
             if (conn):
-                try:
-                    receiveData = conn.recv(self.SIZE).decode(self.FORMAT)
-                    jsonData = json.loads(receiveData)
-                    if (jsonData["action"] == "register"):
-                        self.jsonPeerDatas.append(receiveData)
-                    elif (jsonData["action"] == "publish"):
-                        self.listFile["datas"].append(jsonData["fname"])
-                    elif (jsonData["action"] == "reqListFile"):
-                        self.sendListFile(conn)
-                    elif (jsonData["action"] == "reqListPeer"):
-                        self.sendListPeer(conn, jsonData["fname"])
-                except:
-                    continue
+                receiver = Thread(target = self.receiveMessage, args=(conn,))
+                self.allThreads.append(receiver)
+                receiver.start()
+            
+    def receiveMessage(self, connection):
+        while (self.endAllThread == False):
+            try:
+                receiveData = connection.recv(self.SIZE).decode(self.FORMAT)
+                jsonData = json.loads(receiveData)
+                if (jsonData["action"] == "register"):
+                    self.jsonPeerDatas.append(jsonData)
+                    ID = copy.deepcopy(self.peerId)
+                    jsonData["ID"] = ID
+                    mess = json.dumps({"ID": ID, "action": "resRegister"})
+                    connection.send(mess.encode(self.FORMAT))
+                    self.peerId += 1
+                elif (jsonData["action"] == "publishFile"):
+                    index = jsonData["ID"]
+                    fname = jsonData["fname"]
+                    self.jsonPeerDatas[index]["listFile"].append(fname)
+                    fname_exist = False
+                    for fileName in self.listFile:
+                        if (fname == fileName):
+                            fname_exist = True
+                            break
+                    if (fname_exist == False):
+                        self.listFile.append(fname)
+                elif (jsonData["action"] == "reqListFile"):
+                    self.sendListFile(connection)
+                elif (jsonData["action"] == "reqListPeer"):
+                    self.sendListPeer(connection, jsonData["fname"])
+                elif (jsonData["action"] == "publishFile"):
+                    self.sendListPeer(connection, jsonData["fname"])
+            except:
+                continue
 
     def sendListPeer(self, connection, fname):
-        datas = {"datas": []}
+        listPeer = []
         for jsonPeerData in self.jsonPeerDatas:
-            if (fname in jsonPeerData):
-                jsonData = json.loads(jsonPeerData)
-                data = {
-                    "name": jsonData["name"], "IP": jsonData["IP"], "port": jsonData["port"]}
-                datas["datas"].append(data)
-        sendDatas = json.dumps(datas)
+            for fileName in jsonPeerData["listFile"]:
+                if (fileName == fname):
+                    data = {"name": jsonPeerData["name"], "ID": jsonPeerData["ID"],"IP": jsonPeerData["IP"], "port": jsonPeerData["port"]}
+                    listPeer.append(data)
+        sendDatas = json.dumps({"action": "resListPeer", "listPeer": listPeer})
         connection.send(sendDatas.encode(self.FORMAT))
 
     def sendListFile(self, connection):
-        # code
-        sendDatas = json.dumps(self.listFile)
+        listFile = copy.deepcopy(self.listFile)
+        sendDatas = json.dumps({"action": "resListFile", "listFile": listFile})
         connection.send(sendDatas.encode(self.FORMAT))
 
     def endSystem(self):

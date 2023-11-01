@@ -1,10 +1,11 @@
 import tkinter as tk
 import tkinter.ttk as ttk 
 from PeerClass import Peer
+import time
+import copy
 
 peer = None
 closeApp = False
-listFile = ["fbdbjfsd", "asfwefe"]
 peerBtns = []
 
 def RunPeer():
@@ -12,59 +13,56 @@ def RunPeer():
     name = nameEntry.get()
     port = portEntry.get()
     if (name != "" and port != ""):
-        try:
-            print("Starting Peer...")
-            nameEntry.configure(state = 'readonly')
-            portEntry.configure(state = 'readonly')
-            runPeerBtn.configure(state = 'disable')
-            peer = Peer(name, int(port))
-            peer.startPeer()
-            l4 = tk.Label(master, text = peer.IP, font = ("Helvetica", 11))
-            l4.place(x = 450, y = 61)
-            updateListFile()
-        except:
-            return
+        nameEntry.configure(state = 'readonly')
+        portEntry.configure(state = 'readonly')
+        runPeerBtn.configure(state = 'disable')
+        peer = Peer(name, int(port))
+        peer.startPeer()
+        l4 = tk.Label(master, text = peer.IP, font = ("Helvetica", 11))
+        l4.place(x = 450, y = 61)
     else:
         print("Missing value !")
 
 def updateListFile():
     global peer
-    global listFile
     if (peer == None):
         return
-    if (listFile != None):
-        listbox.delete(0, "end")
-        for peerBtn in peerBtns:
-            peerBtn.destroy()
-        #listFile = peer.getListFile()
-        i = 0
-        for fname in listFile:
-            listbox.insert(i, ' ' + fname)
-            i += 1
-
-def showListPeer(e):
-    str = listbox.get(listbox.curselection())
-    fname = str.replace(" ", "")
-    print(fname)
-    #listPeer = peer.getListPeer(fname)
-    listPeer = [{"name":"abc", "IP": "10.10.01.01", "port": 1234}, {"name":"def", "IP": "192.127.10.00", "port": 5678}]
+    peer.reqListFile()
+    time.sleep(0.05)
+    listFile = peer.listFileServer
+    listbox.delete(0, "end")
     for peerBtn in peerBtns:
         peerBtn.destroy()
     i = 0
-    for peerData in listPeer:
-        name = peerData["name"]
-        IP = peerData["IP"]
-        port = peerData["port"]
-        peerBtn = ttk.Button(master, text = name, style = 'my.TButton', takefocus = 0, command = lambda: requestFile(IP, port, fname))
-        peerBtn.place(x = 460, y = (i + 1)*40 + 120)
-        peerBtns.append(peerBtn)
-        i += 1
+    if (len(listFile) > 0):
+        listbox.configure(state = "normal")
+        for fname in listFile:
+            listbox.insert(i, ' ' + fname)
+            i += 1
+    peer.listFileServer = []
 
-def requestFile(IP, port, fname):
-    try:
-        peer.requestFile(IP, port, fname)
-    except:
-        return
+def showListPeer(e):
+    global peer
+    str = listbox.get(listbox.curselection())
+    fname = str.replace(" ", "")
+    peer.reqListPeer(fname)
+    time.sleep(0.05)
+    listPeer = peer.listPeerServer
+    for peerBtn in peerBtns:
+        peerBtn.destroy()
+    i = 0
+    if (len(listPeer) > 0):
+        for peerData in listPeer:
+            name = peerData["name"]
+            IP = peerData["IP"]
+            port = peerData["port"]
+            peerBtn = ttk.Button(master, text = name, style = 'my.TButton', takefocus = 0, command = lambda: peer.requestFile(IP, port, fname))
+            peerBtn.place(x = 460, y = (i + 1)*40 + 120)
+            peerBtns.append(peerBtn)
+            if (peer.ID == peerData["ID"]):
+                peerBtn.configure(state = 'disable')
+            i += 1
+    peer.listPeerServer = []
     
 def publishFile():
     global peer
@@ -73,7 +71,7 @@ def publishFile():
     lname = lnameEntry.get()
     fname = fnameEntry.get()
     if (lname != "" and fname != ""):
-        peer.publishFile(lname, fname)
+        peer.publFile(lname, fname)
     else:
         print("Missing value !")
 
@@ -116,7 +114,7 @@ showListFile.place(x = 275, y = 125)
 fileArea = tk.Frame(master, background="white")
 fileArea.place(x = 20, y = 155)
 scroll = ttk.Scrollbar(fileArea)
-listbox = tk.Listbox(fileArea, yscrollcommand = scroll.set, font = ("Helvetica", 14), width = 30, height = 7, selectbackground='#b8f89e', selectforeground='black', activestyle='none', highlightthickness=0, borderwidth=0, selectmode = "single")
+listbox = tk.Listbox(fileArea, yscrollcommand = scroll.set, font = ("Helvetica", 14), width = 30, height = 7, selectbackground='#b8f89e', selectforeground='black', activestyle='none', highlightthickness=0, borderwidth=0, selectmode = "single", state = "disabled")
 listbox.bind("<<ListboxSelect>>", showListPeer)
 scroll.pack(side = "right", fill = "y")
 listbox.pack(side = "left", padx = 5, pady = 5)
