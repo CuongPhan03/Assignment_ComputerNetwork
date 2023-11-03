@@ -5,7 +5,6 @@ import copy
 
 class Server:
     IP = socket.gethostbyname(socket.gethostname())
-    PORT = 5000
     FORMAT = "utf8"
     SIZE = 1024
     listFile = []       # [fname1, fname2]
@@ -15,6 +14,9 @@ class Server:
     listSocket = []
     allThreads = []
     endAllThread = False
+
+    def __init__(self, port):
+        self.PORT = port
 
     def startServer(self):
         binder = Thread(target=self.listenMessage)
@@ -43,40 +45,50 @@ class Server:
                 receiveData = connection.recv(self.SIZE).decode(self.FORMAT)
                 jsonData = json.loads(receiveData)
                 if (jsonData["action"] == "register"):
-                    print(jsonData["name"] + " joined !")
-                    self.jsonPeerDatas.append(jsonData)
-                    ID = copy.deepcopy(self.peerId)
-                    jsonData["ID"] = ID
-                    mess = json.dumps({"ID": ID, "action": "resRegister"})
-                    connection.send(mess.encode(self.FORMAT))
-                    self.peerId += 1
+                    # jsonData = {"name": , "IP": , "port": , "action": "register", "listFile": []}
+                    self.handleRegister(connection, jsonData)
                 elif (jsonData["action"] == "publishFile"):
-                    index = jsonData["ID"]
-                    fname = jsonData["fname"]
-                    print(jsonData["name"] + " published " + fname)
-                    self.jsonPeerDatas[index]["listFile"].append(fname)
-                    fname_exist = False
-                    for fileName in self.listFile:
-                        if (fname == fileName):
-                            fname_exist = True
-                            break
-                    if (fname_exist == False):
-                        self.listFile.append(fname)
+                    # jsonData = {"name": , "ID": , "action": "publishFile", "fname": }
+                    self.handlePublish(jsonData)
                 elif (jsonData["action"] == "reqListFile"):
+                    # jsonData = {"name": , "action": "reqListFile"}
                     self.sendListFile(connection)
                 elif (jsonData["action"] == "reqListPeer"):
-                    self.sendListPeer(connection, jsonData["fname"])
-                elif (jsonData["action"] == "publishFile"):
+                    # jsonData = {"action": "reqListPeer", "fname": }
                     self.sendListPeer(connection, jsonData["fname"])
             except:
                 continue
+    
+    def handleRegister(self, connection, jsonData):
+        for jsonPeerData in self.jsonPeerDatas:
+            if (jsonData["IP"] == jsonPeerData["IP"] and jsonData["port"] == jsonPeerData["port"]):
+                print("Address existed !")
+                mess = json.dumps({"registerSucceed": False, "action": "resRegister"})
+                connection.send(mess.encode(self.FORMAT))
+                return
+        print(jsonData["name"] + " joined.")
+        self.jsonPeerDatas.append(jsonData)
+        jsonData["ID"] = self.peerId
+        mess = json.dumps({"registerSucceed": True, "ID": self.peerId, "action": "resRegister"})
+        connection.send(mess.encode(self.FORMAT))
+        self.peerId += 1
+
+    def handlePublish(self, jsonData):
+        index = jsonData["ID"]
+        fname = jsonData["fname"]
+        print(jsonData["name"] + " published " + fname)
+        self.jsonPeerDatas[index]["listFile"].append(fname)
+        for fileName in self.listFile:
+            if (fname == fileName):
+                return
+        self.listFile.append(fname)
 
     def sendListPeer(self, connection, fname):
         listPeer = []
         for jsonPeerData in self.jsonPeerDatas:
             for fileName in jsonPeerData["listFile"]:
                 if (fileName == fname):
-                    data = {"name": jsonPeerData["name"], "ID": jsonPeerData["ID"],"IP": jsonPeerData["IP"], "port": jsonPeerData["port"]}
+                    data = {"name": jsonPeerData["name"], "ID": jsonPeerData["ID"], "IP": jsonPeerData["IP"], "port": jsonPeerData["port"]}
                     listPeer.append(data)
         sendDatas = json.dumps({"action": "resListPeer", "listPeer": listPeer})
         connection.send(sendDatas.encode(self.FORMAT))
@@ -87,10 +99,10 @@ class Server:
         connection.send(sendDatas.encode(self.FORMAT))
 
     def endSystem(self):
-        print("Server off !")
+        print("Server off.")
+        self.endAllThread = True
         for socket in self.listSocket:
             socket.close()
             del socket
         for thread in self.allThreads:
             del thread
-        self.endAllThread = True
