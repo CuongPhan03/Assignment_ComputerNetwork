@@ -76,7 +76,7 @@ def showListPeer(e):
             btnFrame = tk.Frame(master, highlightbackground = "#ff904f", highlightthickness = 2)
             btnFrame.place(x = 530, y = i*45 + 200)
             peerBtn = tk.Button(btnFrame, text = listPeer[i]["name"], font = "Helvetica 11 bold", takefocus = 0,  relief = "sunken", cursor = "hand2",
-                                width = 8, pady = 1, border = 0, bg = "#ff904f", fg = "white", disabledforeground = "#eee" ,
+                                width = 8, pady = 1, border = 0, bg = "#ff904f", fg = "white", disabledforeground = "#eee", activeforeground = "#ff904f",
                                 command = lambda IP = listPeer[i]["IP"], port = listPeer[i]["port"], filename = fname, name = listPeer[i]["name"]: 
                                 peer.requestFile(IP, port, filename, name))
             if (peer.ID == listPeer[i]["ID"]):
@@ -107,7 +107,7 @@ def publishFile():
     if (lname != "" and fname != ""):
         peer.publFile(lname, fname)
     else:
-        print("Missing value !")
+        showwarning("Warning", "  Missing value !  ")
 
 def on_closing():
     global peer
@@ -160,8 +160,8 @@ peerNameEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 15)
 peerPortEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 7)
 peerNameEntry.place(x = 140, y = 102)
 peerPortEntry.place(x = 350, y = 102)
-img1 = Image.open("images/run.png")
-img2 = Image.open("images/run_hover.png")
+img1 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run.png")
+img2 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run_hover.png")
 icon1 = ImageTk.PhotoImage(img1)
 icon2 = ImageTk.PhotoImage(img2)
 runPeerBtn = tk.Button(master, image = icon1, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = RunPeer)
@@ -172,8 +172,8 @@ runPeerBtn.place(x = 625, y = 82)
 #
 l8 = tk.Label(master, text = "List file", font = ("Helvetica", 11))
 l8.place(x = 90, y = 170)
-img3 = Image.open("images/refresh.png")
-img4 = Image.open("images/refresh_hover.png")
+img3 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh.png")
+img4 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh_hover.png")
 icon3 = ImageTk.PhotoImage(img3)
 icon4 = ImageTk.PhotoImage(img4)
 showListFile = tk.Button(master, image = icon3, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = updateListFile)
@@ -209,8 +209,8 @@ l12.place(x = 90, y = 455)
 fnameEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 19)
 fnameEntry.place(x = 145, y = 455)
 
-img5 = Image.open("images/publish.png")
-img6 = Image.open("images/publish_hover.png")
+img5 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\publish.png")
+img6 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\publish_hover.png")
 icon5 = ImageTk.PhotoImage(img5)
 icon6 = ImageTk.PhotoImage(img6)
 publishBtn = tk.Button(master, image = icon5, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = publishFile)
