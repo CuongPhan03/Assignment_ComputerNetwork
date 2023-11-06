@@ -46,7 +46,7 @@ def updateListFile():
     if (peer == None):
         return
     peer.reqListFile()
-    time.sleep(0.05)
+    time.sleep(0.1)
     listFile = peer.listFileServer
     listbox.delete(0, "end")
     for i in range(len(peerBtns)):
@@ -66,7 +66,7 @@ def showListPeer(e):
         return
     fname = str.replace(" ", "")
     peer.reqListPeer(fname)
-    time.sleep(0.05)
+    time.sleep(0.1)
     listPeer = copy.deepcopy(peer.listPeerServer)
     for i in range(len(peerBtns)):
         peerBtns[i].destroy()
@@ -75,8 +75,8 @@ def showListPeer(e):
         for i in range(len(listPeer)):
             btnFrame = tk.Frame(master, highlightbackground = "#ff904f", highlightthickness = 2)
             btnFrame.place(x = 530, y = i*45 + 200)
-            peerBtn = tk.Button(btnFrame, text = listPeer[i]["name"], font = "Helvetica 11 bold", takefocus = 0,  relief = "sunken", cursor = "hand2",
-                                width = 8, pady = 1, border = 0, bg = "#ff904f", fg = "white", disabledforeground = "#eee", activeforeground = "#ff904f",
+            peerBtn = tk.Button(btnFrame, text = listPeer[i]["name"], font = "Helvetica 11 bold", takefocus = 0,  relief = "sunken", cursor = "hand2", width = 8, pady = 1,
+                                border = 0, bg = "#ff904f", fg = "white", disabledforeground = "#eee", activeforeground = "#ff904f", activebackground = "#eee",
                                 command = lambda IP = listPeer[i]["IP"], port = listPeer[i]["port"], filename = fname, name = listPeer[i]["name"]: 
                                 peer.requestFile(IP, port, filename, name))
             if (peer.ID == listPeer[i]["ID"]):
