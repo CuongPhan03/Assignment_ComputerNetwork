@@ -1,6 +1,5 @@
 from threading import Thread
 import socket
-from tkinter.messagebox import showerror
 import json
 import copy
 
@@ -29,7 +28,7 @@ class Server:
             self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.serverSocket.bind((self.IP, self.PORT))
         except:
-            showerror("Warning", "  Fail binding address ! ")
+            print("Fail binding address !")
             self.endSystem()
             return
         self.endAllThread = False
@@ -59,11 +58,13 @@ class Server:
                     self.handlePublish(jsonData)
                 elif (jsonData["action"] == "reqListFile"):
                     # jsonData = {"name": , "action": "reqListFile"}
+                    print(jsonData["name"], "request list file.")
                     self.sendListFile(connection)
                 elif (jsonData["action"] == "reqListPeer"):
                     # jsonData = {"action": "reqListPeer", "fname": }
                     self.sendListPeer(connection, jsonData["fname"])
                 elif (jsonData["action"] == "leaveNetwork"):
+                    # jsonData = {"ID": , "action": "leaveNetwork"}
                     self.handleLeave(connection, jsonData["ID"])
             except:
                 continue
@@ -97,13 +98,38 @@ class Server:
                 if (fileName == fname):
                     data = {"name": peerData["name"], "ID": peerData["ID"], "IP": peerData["IP"], "port": peerData["port"]}
                     listPeer.append(data)
-        sendDatas = json.dumps({"action": "resListPeer", "listPeer": listPeer})
-        connection.send(sendDatas.encode(self.FORMAT))
+        sendData = json.dumps({"action": "resListPeer", "listPeer": listPeer})
+        connection.send(sendData.encode(self.FORMAT))
 
     def sendListFile(self, connection):
         listFile = copy.deepcopy(self.listFile)
-        sendDatas = json.dumps({"action": "resListFile", "listFile": listFile})
-        connection.send(sendDatas.encode(self.FORMAT))
+        sendData = json.dumps({"action": "resListFile", "listFile": listFile})
+        connection.send(sendData.encode(self.FORMAT))
+
+    def ping(self, hostname):
+        peerIP = None
+        peerPort = None
+        for peerData in self.jsonPeerDatas:
+            if (hostname == peerData["name"]):
+                peerIP = peerData["IP"]
+                peerPort = peerData["port"]
+                break
+        if (peerIP == None or peerPort == None):
+            print(hostname, " not found !")
+            return
+        try:
+            pingSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            pingSocket.connect((peerIP, peerPort))
+        except:
+            print("Fail connection !")
+            return
+        print("Pinging " + hostname + ' [' + peerIP + ', ' + str(peerPort) + '] ...')
+        mess = json.dumps({"action": "ping"})
+        pingSocket.send(mess.encode(self.FORMAT))
+        receiveData = pingSocket.recv(self.SIZE).decode(self.FORMAT)
+        jsonData = json.loads(receiveData)
+        if (jsonData["action"] == "resPing"):
+            print("Reply from [" + jsonData["IP"] + ', ' + str(jsonData["port"]) + '] : OK')
 
     def handleLeave(self, connection, ID):
         index = 0

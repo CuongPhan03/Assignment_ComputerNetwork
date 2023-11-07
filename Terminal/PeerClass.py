@@ -1,5 +1,4 @@
 from threading import Thread
-from tkinter.messagebox import showerror, showwarning, showinfo, askquestion
 import socket
 import json
 import os
@@ -14,7 +13,6 @@ class Peer:
     ServerConnection = None
     connectSocket = None
     listFile = {"lname": [], "fname": []}
-    listFileServer = []  # [fname1, fname2]
     listPeerServer = []  # [{"name": , "ID": ,"IP": , "port":}, ]
     listSocket = []
     allThreads = []
@@ -38,26 +36,26 @@ class Peer:
             self.ServerConnection.connect((self.ServerIP, self.ServerPort))
         except:
             self.endSystem()
-            showerror("Error", "  Fail connection !   ")
+            print("Fail connection !")
             return
         try:
             self.PeerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.PeerSocket.bind((self.IP, self.PORT))
         except:
             self.endSystem()
-            showerror("Error", "  Unavailable address ! ")
+            print("Unavailable address !")
             return
         self.endAllThread = False
         # register address
         self.listSocket.append(self.ServerConnection)
         data = json.dumps({"name": self.name, "IP": self.IP, "port": self.PORT, "action": "register", "listFile": []})
         self.ServerConnection.send(data.encode(self.FORMAT))
-
+        print("Peer is running...")
         # listen message
         self.listSocket.append(self.PeerSocket)
         self.PeerSocket.listen()
         receiver1 = Thread(target = self.listenServer)
-        receiver2 = Thread(target = self.listenPeerRes)
+        receiver2 = Thread(target = self.listenRes)
         self.allThreads.append(receiver1)
         self.allThreads.append(receiver2)
         receiver1.start()
@@ -68,7 +66,7 @@ class Peer:
             except:
                 break
             if (conn):
-                receiver3 = Thread(target = self.listenPeerReq, args=(conn,))
+                receiver3 = Thread(target = self.listenReq, args=(conn,))
                 self.allThreads.append(receiver3)
                 receiver3.start()
 
@@ -78,22 +76,23 @@ class Peer:
                 receiveData = self.ServerConnection.recv(self.SIZE).decode(self.FORMAT)
                 jsonData = json.loads(receiveData)
                 if (jsonData["action"] == "resRegister"):
-                    print("Peer is running...")
                     self.ID = jsonData["ID"]
                 elif (jsonData["action"] == "resListFile"):
-                    # jsonData = {"action": "resListFile", "listFile": [fname, ]}
-                    self.listFileServer = []
+                    # jsonData = {"action": "resListFile", "listFile": [fname1, ]}
                     for fname in jsonData["listFile"]:
-                        self.listFileServer.append(fname)
+                        print(' ', fname)
                 elif (jsonData["action"] == "resListPeer"):
                     # jsonData = {"action": "resListPeer", "listPeer": [{"name": , "ID": , "IP": , "port":}, ]}
+                    print("  Other Users has the file: ")
                     self.listPeerServer = []
                     for peerData in jsonData["listPeer"]:
+                        print('  ', peerData["name"])
                         self.listPeerServer.append(peerData)
+                        
             except:
                 continue
 
-    def listenPeerReq(self, connection):
+    def listenReq(self, connection):
         while(self.endAllThread == False):
             try:
                 receiveData = connection.recv(self.SIZE).decode(self.FORMAT)
@@ -106,22 +105,24 @@ class Peer:
                     sender = Thread(target = self.sendFile, args=(connection, fname, peerName))
                     self.allThreads.append(sender)
                     sender.start()
+                if (jsonData["action"] == "ping"):
+                    print("\nPinging from Server...")
+                    mess = json.dumps({"IP": self.IP, "port": self.PORT, "action": "resPing"})
+                    connection.send(mess.encode(self.FORMAT))
             except:
                 continue
 
-    def listenPeerRes(self):
+    def listenRes(self):
         while(self.endAllThread == False):
             try:
                 receiveData = self.connectSocket.recv(self.SIZE).decode(self.FORMAT)
                 jsonData = json.loads(receiveData)
                 if (jsonData["action"] == "resFile"):
                     # jsonData = {"name": , "action": "resFile", "status": , "fname": }
-                    if (jsonData["status"] == "yes"):
+                    if (jsonData["status"] == "ok"):
                         self.receiveFile(jsonData["fname"], jsonData["name"])
-                    elif (jsonData["status"] == "no"):
-                        showerror("Error", "  " + jsonData["name"] + " refused to send '" + jsonData["fname"] + "' !  ")
                     else:
-                        showerror("Error", "  File not found !  ")
+                        print("File not found !")
                     self.connectSocket.close()
                     self.connectSocket = None
             except:
@@ -135,28 +136,24 @@ class Peer:
                 lname = self.listFile["lname"][i]
                 break
             i += 1
-        if os.path.isfile(lname):
-            res = askquestion("Request", peerName + " requests " + fname)
-            if res == 'yes':
-                mess = json.dumps({"name": self.name , "action": "resFile", "status": "yes", "fname": fname})
-                connection.send(mess.encode(self.FORMAT))
-                time.sleep(0.1)
-                with open(lname, "rb") as file:
-                    while True:
-                        try:
-                            data = file.read(self.SIZE)
-                            if (not data):
-                                break
-                            print("Sending " + fname + " to " + peerName + "...")
-                            connection.send(data)
-                        except:
-                            continue
-                    print("Done Sending.")
-            else:
-                mess = json.dumps({"name": self.name , "action": "resFile", "status": "no", "fname": fname})
-                connection.send(mess.encode(self.FORMAT))        
+        path = os.path.join(self.name, lname)
+        if os.path.isfile(path):
+            mess = json.dumps({"name": self.name , "action": "resFile", "status": "ok", "fname": fname})
+            connection.send(mess.encode(self.FORMAT))
+            time.sleep(0.1)
+            with open(path, "rb") as file:
+                while True:
+                    try:
+                        data = file.read(self.SIZE)
+                        if (not data):
+                            break
+                        print("Sending " + fname + " to " + peerName + "...")
+                        connection.send(data)
+                    except:
+                        continue
+                print("Done Sending.")       
         else:
-            showerror("Error", "  File not found !  ")
+            print("File not found !")
             mess = json.dumps({"name": self.name , "action": "resFile", "status": "notfound", "fname": fname})
             connection.send(mess.encode(self.FORMAT))
 
@@ -175,65 +172,69 @@ class Peer:
                     break
             file.close()
             print("Done Receiving.")
-            showinfo("Infomation", "  Done Receiving.  ") 
-        
-    def reqListFile(self):
-        sender = Thread(target = self.requestListFile)
-        self.allThreads.append(sender)
-        sender.start()
         
     def requestListFile(self):
         mess = json.dumps({"name": self.name, "action": "reqListFile"})
         self.ServerConnection.send(mess.encode(self.FORMAT))
 
-    def reqListPeer(self, fname):
-        sender = Thread(target = self.requestListPeer, args = (fname,))
-        self.allThreads.append(sender)
-        sender.start()
-        
-    def requestListPeer(self, fname):
-        mess = json.dumps({"action": "reqListPeer", "fname": fname})
-        self.ServerConnection.send(mess.encode(self.FORMAT))
+    def showMyFiles(self):
+        print("  Published files: ")
+        for i in range(len(self.listFile["lname"])):
+            print("    lname: ", self.listFile["lname"][i], "  ->  ", "fname: ", self.listFile["fname"][i])
+        print("  Private files: ")
+        for lname in os.listdir(self.name):
+            count = 0
+            for i in range(len(self.listFile["lname"])):
+                if (lname != self.listFile["lname"][i]):
+                    count +=1
+                else: 
+                    break
+            if count == len(self.listFile["lname"]):
+                print("    lname: ", lname)
 
-    def requestFile(self, IP, port, fname, peerName):
-        if (self.connectSocket != None):
-            showwarning("Warning", "  Busy !   ")
+    def fetch(self, fname, hostname):
+        if (hostname == self.name):
+            print("You can't dowload your file !")
             return
-        path = os.path.join(self.name, fname)
-        if os.path.isfile(path):
-            showwarning("Warning", "  File existed in local ! ")
+        IP = None
+        port = None
+        for peerData in self.listPeerServer:
+            if (hostname == peerData["name"]):
+                IP = peerData["IP"]
+                port = peerData["port"]
+                break
+        if (IP == None or port == None):
+            print(hostname, " not found !")
             return
-        connect = Thread(target = self.startConnection, args = (IP, port, fname))
-        self.allThreads.append(connect)
-        connect.start()
-
-    def startConnection(self, IP, port, fname):
         self.connectSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connectSocket.connect((IP, port))
         self.listSocket.append(self.connectSocket)
         mess = json.dumps({"name": self.name, "action": "reqFile", "fname": fname})
         self.connectSocket.send(mess.encode(self.FORMAT))
 
-    def publFile(self, lname, fname):
+    def publish(self, lname, fname):
         for name in self.listFile["lname"]:
             if (lname == name):
-                showwarning("Warning", "  File published before ! ")
+                print("File published before !")
                 return
         for name in self.listFile["fname"]:
             if (fname == name):
-                showwarning("Warning", "  File published before ! ")
+                print("File published before !")
                 return
-        publisher = Thread(target = self.publishFile, args = (lname, fname))
-        self.allThreads.append(publisher)
-        publisher.start()
-
-    def publishFile(self, lname, fname):
         self.listFile["lname"].append(lname)
         self.listFile["fname"].append(fname)
         mess = json.dumps({"ID": self.ID, "action": "publishFile", "fname": fname})
         self.ServerConnection.send(mess.encode(self.FORMAT))
-        showinfo("Infomation", "  Publish '" + fname + "' successfully")
+        print("Publish '" + fname + "' successfully")
         
+    def requestListPeer(self, fname):
+        path = os.path.join(self.name, fname)
+        if os.path.isfile(path):
+            print("File existed in local ! ")
+            return
+        mess = json.dumps({"action": "reqListPeer", "fname": fname})
+        self.ServerConnection.send(mess.encode(self.FORMAT))
+
     def endSystem(self):
         if (self.ID != None):
             mess = json.dumps({"ID": self.ID, "action": "leaveNetwork"})
