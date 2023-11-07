@@ -4,6 +4,7 @@ from tkinter.messagebox import showerror, showwarning
 from PIL import ImageTk, Image
 from ServerClass import Server
 import time
+import os
 
 server = None
 listPeer = None
@@ -98,8 +99,9 @@ portEntry.place(x = 125, y = 70)
 
 style = ttk.Style()
 style.configure("my.TButton", font=("Helvetica", 10))
-img1 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run.png")
-img2 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run_hover.png")
+path = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+img1 = Image.open(path + "\images\\run.png")
+img2 = Image.open(path + "\images\\run_hover.png")
 icon1 = ImageTk.PhotoImage(img1)
 icon2 = ImageTk.PhotoImage(img2)
 runServerBtn = tk.Button(master, image = icon1, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = RunServer)
@@ -110,8 +112,8 @@ runServerBtn.place(x = 492, y = 63)
 #
 l4 = tk.Label(master, text = "Users", font = ("Helvetica", 11))
 l4.place(x = 85, y = 135)
-img3 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh.png")
-img4 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh_hover.png")
+img3 = Image.open(path + "\images\\refresh.png")
+img4 = Image.open(path + "\images\\refresh_hover.png")
 icon3 = ImageTk.PhotoImage(img3)
 icon4 = ImageTk.PhotoImage(img4)
 showListPeer = tk.Button(master, image = icon3, border = 0, borderwidth = 0, bg = "#f8f8f8", relief = "sunken", cursor = "hand2", command = updateListUser)

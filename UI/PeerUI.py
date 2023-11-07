@@ -6,6 +6,7 @@ from PIL import ImageTk, Image
 from PeerClass import Peer
 import time
 import copy
+import os
 
 peer = None
 closeApp = False
@@ -160,8 +161,9 @@ peerNameEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 15)
 peerPortEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 7)
 peerNameEntry.place(x = 140, y = 102)
 peerPortEntry.place(x = 350, y = 102)
-img1 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run.png")
-img2 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\run_hover.png")
+path = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+img1 = Image.open(path + "\images\\run.png")
+img2 = Image.open(path + "\images\\run_hover.png")
 icon1 = ImageTk.PhotoImage(img1)
 icon2 = ImageTk.PhotoImage(img2)
 runPeerBtn = tk.Button(master, image = icon1, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = RunPeer)
@@ -172,8 +174,8 @@ runPeerBtn.place(x = 625, y = 82)
 #
 l8 = tk.Label(master, text = "List file", font = ("Helvetica", 11))
 l8.place(x = 90, y = 170)
-img3 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh.png")
-img4 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\refresh_hover.png")
+img3 = Image.open(path + "\images\\refresh.png")
+img4 = Image.open(path + "\images\\refresh_hover.png")
 icon3 = ImageTk.PhotoImage(img3)
 icon4 = ImageTk.PhotoImage(img4)
 showListFile = tk.Button(master, image = icon3, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = updateListFile)
@@ -209,8 +211,8 @@ l12.place(x = 90, y = 455)
 fnameEntry = ttk.Entry(master, font = ("Helvetica", 11), width = 19)
 fnameEntry.place(x = 145, y = 455)
 
-img5 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\publish.png")
-img6 = Image.open("D:\Documents\CƠ SỞ NGÀNH\Mạng máy tính\Btl\Assignment1\Code\images\\publish_hover.png")
+img5 = Image.open(path + "\images\publish.png")
+img6 = Image.open(path + "\images\publish_hover.png")
 icon5 = ImageTk.PhotoImage(img5)
 icon6 = ImageTk.PhotoImage(img6)
 publishBtn = tk.Button(master, image = icon5, border = 0, borderwidth = 0, relief = "sunken", cursor = "hand2", command = publishFile)
