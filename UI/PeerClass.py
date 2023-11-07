@@ -106,6 +106,10 @@ class Peer:
                     sender = Thread(target = self.sendFile, args=(connection, fname, peerName))
                     self.allThreads.append(sender)
                     sender.start()
+                if (jsonData["action"] == "ping"):
+                    print("Pinging from Server...")
+                    mess = json.dumps({"IP": self.IP, "port": self.PORT, "action": "resPing"})
+                    connection.send(mess.encode(self.FORMAT))
             except:
                 continue
 

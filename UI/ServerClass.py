@@ -64,7 +64,11 @@ class Server:
                     # jsonData = {"action": "reqListPeer", "fname": }
                     self.sendListPeer(connection, jsonData["fname"])
                 elif (jsonData["action"] == "leaveNetwork"):
+                    # jsonData = {"ID": , "action": "leaveNetwork"}
                     self.handleLeave(connection, jsonData["ID"])
+                elif (jsonData["action"] == "resPing"):
+                    # jsonData = {"IP": , "port": ,"action": "resPing"}
+                    print("Repy from [" + jsonData["IP"] + jsonData["port"] + "]: OK")
             except:
                 continue
     
@@ -104,6 +108,26 @@ class Server:
         listFile = copy.deepcopy(self.listFile)
         sendDatas = json.dumps({"action": "resListFile", "listFile": listFile})
         connection.send(sendDatas.encode(self.FORMAT))
+
+    def ping(self, hostname):
+        peerIP = None
+        peerPort = None
+        for peerData in self.jsonPeerDatas:
+            if (hostname == peerData["name"]):
+                peerIP = peerData["IP"]
+                peerPort = peerData["port"]
+                break
+        if (peerIP == None or peerPort == None):
+            print(hostname, " not found !")
+        try:
+            pingSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            pingSocket.connect((peerIP, peerPort))
+        except:
+            print("Fail connection !")
+            return
+        print("Pinging [" + hostname + ' ' + peerIP + ',' + str(peerPort) + '] ...')
+        mess = json.dumps({"action": "ping"})
+        pingSocket.send(mess.encode(self.FORMAT))
 
     def handleLeave(self, connection, ID):
         index = 0
